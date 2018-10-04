@@ -39,7 +39,7 @@ public class CSII extends AdvancedRobot
 	public void onCUstomEvent(CustomEvent e)
 	{
 		if(e.getCondition() instanceof RadarTurnCompleteCondition)
-			setTurnRadarRight(360); //we will change for sweep
+			sweep(); //we will change for sweep
 				
 	}
 	/**
