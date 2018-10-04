@@ -1,35 +1,47 @@
 package Informatica;
 
 import robocode.*;
+import robocode.util.Utils;
+
 import java.awt.Color;
 import java.util.*;
 
 public class CSII extends AdvancedRobot 
 {
-	private Vector<EnemyBot> enemyList;
+	private Vector<EnemyBot> enemyList = new Vector<EnemyBot>(0);
+	private int radarDirection = 1;
+	//
+	
 	public void run()
 	{
 		// Initialization of the robot--------------------------------------------------
-		setColors(Color.DARK_GRAY,Color.gray,Color.yellow); // body,gun,radar
+		setColors(Color.DARK_GRAY,Color.gray,Color.blue); // body,gun,radar
 		
 		final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();
+		
+		addCustomEvent( new RadarTurnCompleteCondition(this));
+		setAdjustRadarForGunTurn(true);
+		setTurnRadarRight(360);
 		
 		
 		// Robot main loop
 		while(true)
 		{
 			// Replace the next 4 lines with any behavior you would like
-			ahead(100);
-			turnGunRight(128);
-			fire(5);
-			turnRight(128);
-			back(10);
-			turnGunRight(128);
-			turnRight(120);
+			execute();
 		}
 	}
 
+	/**
+	 * onCustomEvent: Custom events handler
+	 */
+	public void onCUstomEvent(CustomEvent e)
+	{
+		if(e.getCondition() instanceof RadarTurnCompleteCondition)
+			setTurnRadarRight(360); //we will change for sweep
+				
+	}
 	/**
 	 * onScannedRobot: What to do when you see another robot
 	 */
@@ -38,7 +50,19 @@ public class CSII extends AdvancedRobot
 		EnemyBot enemy =  new EnemyBot(e, getX(), getY(), getHeading());
 		if(!enemyList/*vector object that we will include later*/.contains(enemy))
 		{
-			enemyList.add(enemy);
+			enemyList.addElement(enemy);
+			System.out.println("Enemy added");
+		}
+		else //Contains it
+		{
+			Iterator<EnemyBot> iterator = enemyList.iterator();
+			while(!iterator.hasNext())
+			{
+				if((iterator.next()).equals(enemy))
+						enemy.update(e,getX(), getY(), getHeading()); //It could be useful to add time to reduce
+						//COmputational loads
+			}
+			System.out.println("Enemy updated");
 		}
 	}
 
@@ -67,5 +91,35 @@ public class CSII extends AdvancedRobot
 		back(10);
 		turnGunRight(128);
 		turnRight(0);
+	}
+	
+	/*Adapted from Eivind Bjarte Tjore sweep algorith from Secrets from the robocode master:RadarSweep*/
+	private void sweep()
+	{
+		double maxBearingAbs = 0;
+		double maxBearing = 0;
+		int scanned = 0;
+		Iterator<EnemyBot> it = enemyList.iterator();
+		while(it.hasNext())
+		{
+			EnemyBot temp = (EnemyBot)it.next();
+			if(getTime() + temp.lastAct() < 16)
+			{
+				double bearing = Utils.normalRelativeAngleDegrees(getHeading() + temp.getBearing() - getRadarHeading());
+				if(Math.abs(bearing) > maxBearingAbs)
+				{
+					maxBearingAbs = Math.abs(bearing);
+					maxBearing = bearing;
+				}
+				
+				scanned++;
+			}
+		}
+		
+		double radarTurn = 180*radarDirection;
+		if(scanned == getOthers())
+			radarTurn = maxBearing + Math.signum(maxBearing)*22.5; //22.5 Correction factor
+		setTurnRadarRight(radarTurn);
+		radarDirection =(int) Math.signum(radarTurn);
 	}
 }
