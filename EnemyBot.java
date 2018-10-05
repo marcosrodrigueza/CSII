@@ -13,8 +13,9 @@ public class EnemyBot
 	  private double heading;
 	  private double velocity;
 	  private long timeac;
-	  private GravPoint pos;
-	  //
+	  private GravPoint pos = new GravPoint(); // here we provide an interface to be able to use it as a normal Point
+	  						// since power is only relevant to the manager, and its a state value for the strategy
+	
 	  
 	  public EnemyBot(ScannedRobotEvent e, double myx, double myy, double myheading)
 	  {
@@ -122,7 +123,26 @@ public class EnemyBot
 		  timeac = e.getTime();
 		  calcEnemyCordsXY(myx, myy, myheading);
 	  }
+	  public void updateEnemy(EnemyBot e) 
+		{
+			// TODO Auto-generated method stub
+	      	distance = e.getDistance();
+	      	heading = e.getEnergy();
+	      	velocity = e.getVelocity();
+	      	energy = e.getEnergy();
+	      	bearing = e.getBearing(); 
+	      	timeac = e.lastAct();
+	      	pos.x = e.getX();
+	      	pos.y = e.getY();
+
+		}
 	  
+	  public void printVals() //Debugging method
+	  {
+		  System.out.println(name + " Time act : " + timeac + " x: " + pos.x + " y: " + pos.y);
+	  }
+	  
+
 	  /*Based on Sing Li DuckBot XY algorithm*/
 	  
 	  private void calcEnemyCordsXY(double mx, double my, double heading) 

@@ -15,7 +15,7 @@ public class CSII extends AdvancedRobot
 	public void run()
 	{
 		// Initialization of the robot--------------------------------------------------
-		setColors(Color.DARK_GRAY,Color.gray,Color.blue); // body,gun,radar
+		setColors(Color.DARK_GRAY,Color.cyan,Color.cyan); // body,gun,radar
 		
 		final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();
@@ -48,22 +48,27 @@ public class CSII extends AdvancedRobot
 	public void onScannedRobot(ScannedRobotEvent e)
 	{
 		EnemyBot enemy =  new EnemyBot(e, getX(), getY(), getHeading());
-		if(!enemyList/*vector object that we will include later*/.contains(enemy))
+		if(!enemyList.contains(enemy))
 		{
 			enemyList.addElement(enemy);
 			System.out.println("Enemy added");
 		}
 		else //Contains it
 		{
-			Iterator<EnemyBot> iterator = enemyList.iterator();
-			while(!iterator.hasNext())
+			
+			for(int i = 0; i < enemyList.size(); i++)
 			{
-				if((iterator.next()).equals(enemy))
-						enemy.update(e,getX(), getY(), getHeading()); //It could be useful to add time to reduce
-						//COmputational loads
-			}
-			System.out.println("Enemy updated");
-		}
+				if((enemyList.elementAt(i)).equals(enemy))
+				{
+						enemyList.get(i).printVals(); //DEBUG
+						enemyList.get(i).updateEnemy(enemy); //It could be useful to add time actualization margin 
+						//to reduce computational loads
+						enemyList.get(i).printVals(); //DEBUG
+						break;
+				}
+			}//end for
+			
+		} //end else
 	}
 
 	/**
