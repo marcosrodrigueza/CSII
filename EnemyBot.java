@@ -13,8 +13,7 @@ public class EnemyBot
 	  private double heading;
 	  private double velocity;
 	  private long timeac;
-	  private double x;
-	  private double y;
+	  private GravPoint pos;
 	  //
 	  
 	  public EnemyBot(ScannedRobotEvent e, double myx, double myy, double myheading)
@@ -60,12 +59,18 @@ public class EnemyBot
 	  }
 	  public double getX()
 	  {
-		  return x;
+		  return pos.x;
 	  }
 	  public double getY()
 	  {
-		  return y;
+		  return pos.y;
 	  }
+	  
+	  public GravPoint getGravPoint()
+	  {
+		  return pos;
+	  }
+	  
 	  public void setName(String newname)
 	  {
 	  name = newname;
@@ -89,6 +94,11 @@ public class EnemyBot
 	  public void setBearing(double b)
 	  {
 		 bearing = b;
+	  }
+	  
+	  public void setPower(double pow)
+	  {
+		  pos.power = pow;
 	  }
 	  
 	  public void update(double d, double h, double v, double e, double b, long t, double myx, double myy, double myheading)
@@ -124,10 +134,10 @@ public class EnemyBot
 	       
 	       absoluteBearing = Math.toRadians(absoluteBearing);   // convert to radians
 
-	       this.x = mx + Math.sin(absoluteBearing) * distanceWhenSighted;
-	       this.y = my + Math.cos(absoluteBearing) * distanceWhenSighted;
+	       pos.x = mx + Math.sin(absoluteBearing) * distanceWhenSighted;
+	       pos.y = my + Math.cos(absoluteBearing) * distanceWhenSighted;
 
-	       System.out.println( this.getName() + " is at " + x + ", " + y); //Visual Debugging
+	       System.out.println( this.getName() + " is at " + pos.x + ", " + pos.y); //Visual Debugging
 
 	  }
 	  
