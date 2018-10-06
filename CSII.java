@@ -153,7 +153,7 @@ public class CSII extends AdvancedRobot
 			
 	    } 
 		//Could be convenient to add middle points for mele functions
-		midpointstrength = 1000;
+		midpointstrength = -7000;
 	    p = new GravPoint(getBattleFieldWidth(), getBattleFieldHeight(), midpointstrength);
 	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
 	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
