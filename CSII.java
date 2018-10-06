@@ -18,13 +18,16 @@ public class CSII extends AdvancedRobot
 		setEventPriority("ScannedRobotEvent", 70); // done to make it uniterruptible from death events
 		//To prevent accesing the vector at the same time;
 		
-		setColors(Color.black,Color.black,Color.cyan); // body,gun,radar
+		setColors(Color.white,Color.white,Color.pink); // body,gun,radar
 		
 		/*final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();*/
 		
-		addCustomEvent( new RadarTurnCompleteCondition(this));
-		setAdjustRadarForGunTurn(true);
+		addCustomEvent( new RadarTurnCompleteCondition(this)); //Custom event
+		setAdjustGunForRobotTurn(true); //gun  independent from robot
+		setAdjustRadarForGunTurn(true); // radar independent from gun
+		setAdjustRadarForRobotTurn(true);
+		
 		setTurnRadarRight(360);
 		
 		
@@ -44,7 +47,7 @@ public class CSII extends AdvancedRobot
 	{
 		if(e.getCondition() instanceof RadarTurnCompleteCondition)
 		{
-			sweep(); //we will change for sweep
+			 sweep();
 		}
 				
 	}
@@ -88,8 +91,12 @@ public class CSII extends AdvancedRobot
 	/**
 	 * onHitWall: What to do when you hit a wall
 	 */
-	public void onHitWall(HitWallEvent e) {
+	public void onHitWall(HitWallEvent e) 
+	{
 		// Replace the next line with any behavior you would like
+		setTurnRight(180);
+		ahead(150);
+		
 		
 	}
 	
@@ -100,10 +107,11 @@ public class CSII extends AdvancedRobot
 		double maxBearing = 0;
 		int scanned = 0;
 		Iterator<EnemyBot> it = enemyList.iterator();
+		
 		while(it.hasNext())
 		{
 			EnemyBot temp = (EnemyBot)it.next();
-			if(getTime() + temp.lastAct() < 16)
+			if(getTime() - temp.lastAct() < 16)
 			{
 				double bearing = Utils.normalRelativeAngleDegrees(getHeading() + temp.getBearing() - getRadarHeading());
 				if(Math.abs(bearing) > maxBearingAbs)
@@ -118,7 +126,7 @@ public class CSII extends AdvancedRobot
 		
 		double radarTurn = 180*radarDirection;
 		if(scanned == getOthers())
-			radarTurn = maxBearing + Math.signum(maxBearing)*22.5; //22.5 Correction factor
+			radarTurn = maxBearing + Math.signum(maxBearing)*16; //22.5 Correction factor
 		setTurnRadarRight(radarTurn);
 		radarDirection =(int) Math.signum(radarTurn);
 	}
@@ -145,7 +153,7 @@ public class CSII extends AdvancedRobot
 			
 	    } 
 		//Could be convenient to add middle points for mele functions
-		midpointstrength = -100;
+		midpointstrength = 1000;
 	    p = new GravPoint(getBattleFieldWidth(), getBattleFieldHeight(), midpointstrength);
 	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
 	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
@@ -268,5 +276,115 @@ public class CSII extends AdvancedRobot
 		double yo = y2-y1;
 		double h = Math.sqrt( xo*xo + yo*yo );
 		return h;	
+	}
+	
+	public class Manager implements ManagerConstants
+	{
+		private int target;
+		
+		
+		public Manager()
+		{
+			target = -1;
+
+		}
+		
+		public void searchTarget()
+		{
+			enemyList.clear();
+		}
+		
+		public void perform(double myx, double myy)
+		{
+			if (target == -1)
+				System.out.println("No enemies detected");
+			else
+			{
+				if((enemyList.get(target)).getName() == "sample.Crazy")
+				{
+					this.crazyStrategy(myx, myy);
+				}
+				else if((enemyList.get(target)).getName() == "sample.PaintingRobot")
+				{
+					this.paintingStrategy(myx, myy);
+				}
+				else if((enemyList.get(target)).getName() == "sample.SpinBot")
+				{
+					this.spinStrategy(myx,myy);
+				}
+				else
+				{
+					this.strategy(myx,myy);
+				}
+			} //end else
+		} //end perform
+		
+		private void crazyStrategy(double currX, double currY)
+		{
+			double firepow = 1;
+			double gravstrenght = 500;
+			double tarx, tary,tarhead_deg, tarvel;
+			
+			(enemyList.get(target)).setPower(gravstrenght);
+			tarx = (enemyList.get(target)).getX();
+			tary = (enemyList.get(target)).getY();
+			tarhead_deg = (enemyList.get(target)).getHeading();
+			tarvel = (enemyList.get(target)).getVelocity();
+			
+			//Intercept intercept = new Intercept();
+			//intercept.calculate(currX, currY, tarx, tary, tarhead_deg, tarvel, firepow, /*Angvel*/ 0);
+			
+		}
+		
+		private void paintingStrategy(double currX, double currY)
+		{
+			double firepow = 2;
+			double gravstrenght = -50;
+			double tarx, tary,tarhead_deg, tarvel;
+			
+			(enemyList.get(target)).setPower(gravstrenght);
+			tarx = (enemyList.get(target)).getX();
+			tary = (enemyList.get(target)).getY();
+			tarhead_deg = (enemyList.get(target)).getHeading();
+			tarvel = (enemyList.get(target)).getVelocity();
+			
+			//Intercept intercept = new Intercept();
+		//	intercept.calculate(currX, currY, tarx, tary, tarhead_deg, tarvel, firepow, /*Angvel*/ 0);
+			
+		}
+		
+		private void spinStrategy(double currX, double currY)
+		{
+			double firepow = 1;
+			double gravstrenght = 500;
+			double tarx, tary,tarhead_deg, tarvel;
+			
+			(enemyList.get(target)).setPower(gravstrenght);
+			tarx = (enemyList.get(target)).getX();
+			tary = (enemyList.get(target)).getY();
+			tarhead_deg = (enemyList.get(target)).getHeading();
+			tarvel = (enemyList.get(target)).getVelocity();
+			
+		//	CircularIntercept intercept = new CircularIntercept();
+		//	intercept.calculate(currX, currY, tarx, tary, tarhead, tarvel, firepow, /*Angvel*/ 0);
+			
+		}
+		
+		private void strategy(double currX, double currY)
+		{
+			double firepow = 1;
+			double gravstrenght = 500;
+			double tarx, tary,tarhead_deg, tarvel;
+			
+			(enemyList.get(target)).setPower(gravstrenght);
+			tarx = (enemyList.get(target)).getX();
+			tary = (enemyList.get(target)).getY();
+			tarhead_deg = (enemyList.get(target)).getHeading();
+			tarvel = (enemyList.get(target)).getVelocity();
+			
+			//Intercept intercept = new Intercept();
+			//intercept.calculate(currX, currY, tarx, tary, tarhead_deg, tarvel, firepow, /*Angvel*/ 0);
+			
+		}
 	}
 }
