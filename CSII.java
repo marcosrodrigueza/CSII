@@ -15,7 +15,10 @@ public class CSII extends AdvancedRobot
 	public void run()
 	{
 		// Initialization of the robot--------------------------------------------------
-		setColors(Color.DARK_GRAY,Color.cyan,Color.yellow); // body,gun,radar
+		setEventPriority("ScannedRobotEvent", 70); // done to make it uniterruptible from death events
+		//To prevent accesing the vector at the same time;
+		
+		setColors(Color.black,Color.black,Color.cyan); // body,gun,radar
 		
 		/*final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();*/
@@ -37,10 +40,12 @@ public class CSII extends AdvancedRobot
 	/**
 	 * onCustomEvent: Custom events handler
 	 */
-	public void onCUstomEvent(CustomEvent e)
+	public void onCustomEvent(CustomEvent e)
 	{
 		if(e.getCondition() instanceof RadarTurnCompleteCondition)
+		{
 			sweep(); //we will change for sweep
+		}
 				
 	}
 	/**
@@ -77,13 +82,7 @@ public class CSII extends AdvancedRobot
 	 */
 	public void onHitByBullet(HitByBulletEvent e) {
 		// Replace the next line with any behavior you would like
-		back(10);
-		turnGunLeft(128);
-		fire(5);
-		turnLeft(128);
-		back(10);
-		turnGunLeft(128);
-		turnLeft(120);
+		
 	}
 	
 	/**
@@ -91,12 +90,7 @@ public class CSII extends AdvancedRobot
 	 */
 	public void onHitWall(HitWallEvent e) {
 		// Replace the next line with any behavior you would like
-		back(20);
-		turnGunRight(128);
-		turnRight(128);
-		back(10);
-		turnGunRight(128);
-		turnRight(0);
+		
 	}
 	
 	/*Adapted from Eivind Bjarte Tjore sweep algorith from Secrets from the robocode master:RadarSweep*/
@@ -134,6 +128,7 @@ public class CSII extends AdvancedRobot
    		double xforce = 0;
 	    double yforce = 0;
 	    double force;
+	    double midpointstrength;
 	    double ang;
 	    GravPoint p;
 	    
@@ -148,7 +143,56 @@ public class CSII extends AdvancedRobot
 		        xforce += Math.sin(ang) * force;
 		        yforce += Math.cos(ang) * force;
 			
-	    } //Could be convenient to add middel points for mele functions
+	    } 
+		//Could be convenient to add middle points for mele functions
+		midpointstrength = -100;
+	    p = new GravPoint(getBattleFieldWidth(), getBattleFieldHeight(), midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(0,0, midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(0, getBattleFieldHeight(), midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(getBattleFieldWidth(), 0, midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(getBattleFieldWidth()/2, getBattleFieldHeight(), midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(getBattleFieldWidth()/2, 0, midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(getBattleFieldWidth(), getBattleFieldHeight()/2, midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    p = new GravPoint(0, getBattleFieldHeight()/2, midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
 	    
 	    /**The following four lines add wall avoidance.  They will only affect us if the bot is close 
 	    to the walls due to the force from the walls decreasing at a power 3.**/
