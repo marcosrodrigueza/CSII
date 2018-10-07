@@ -11,6 +11,7 @@ public class CSII extends AdvancedRobot
 	private Vector<EnemyBot> enemyList = new Vector<EnemyBot>(0);
 	private Manager manager = new Manager();
 	private int radarDirection = 1;
+	private double firePow;
 	
 	//
 	
@@ -20,7 +21,8 @@ public class CSII extends AdvancedRobot
 		setEventPriority("ScannedRobotEvent", 70); // done to make it uniterruptible from death events
 		//To prevent accesing the vector at the same time;
 		
-		setColors(Color.black,Color.black,Color.magenta); // body,gun,radar
+		Color spec = new Color(220, 27, 124);
+		setColors(Color.black,spec,Color.black); // body,gun,radar
 		
 		/*final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();*/
@@ -31,7 +33,8 @@ public class CSII extends AdvancedRobot
 		setAdjustRadarForRobotTurn(true);
 		
 		setTurnRadarRight(360);
-		
+		GravPoint point = new GravPoint(0,0,0);
+		double gunOffset;
 		
 		// Robot main loop
 		while(true)
@@ -42,7 +45,18 @@ public class CSII extends AdvancedRobot
 				manager.searchTarget(getX(), getY());
 				manager.perform(getX(), getY());
 			}*/
-			setFire(/*Math.min(getEnergy(), 3.0)*/1);
+			
+			if(!enemyList.isEmpty())
+			{
+				firePow = 400/enemyList.get(0).getDistance();
+				/*point = guessPosition( 4 , 6.253); 
+			    gunOffset = getGunHeadingRadians() - (Math.PI/2 - Math.atan2(point.y - getY(), point.x - getX()));
+			    
+				setTurnGunLeftRadians(Utils.normalRelativeAngle(gunOffset));
+				*/
+				predict(firePow , 6.253);
+				setFire(firePow);
+			}
 			antiGravMove();
 			execute();
 		}
@@ -64,11 +78,11 @@ public class CSII extends AdvancedRobot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e)
 	{
-		double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
+		/*double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
 		setTurnGunRightRadians(
 		    robocode.util.Utils.normalRelativeAngle(absoluteBearing - 
 		        getGunHeadingRadians()));
-		
+		*/
 		EnemyBot enemy =  new EnemyBot(e, getX(), getY(), getHeading());
 		if(!enemyList.contains(enemy))
 		{
@@ -192,7 +206,15 @@ public class CSII extends AdvancedRobot
 			
 	    } 
 		//Could be convenient to add middle points for mele functions
-		midpointstrength = -1000;
+		/*midpointstrength = -160;
+		
+		p = new GravPoint(getBattleFieldWidth()/2, getBattleFieldHeight()/2, midpointstrength);
+	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),2);
+	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
+	    xforce += Math.sin(ang) * force;
+	    yforce += Math.cos(ang) * force;
+	    
+	    midpointstrength = -1000;
 	    
 	    p = new GravPoint(0,0, midpointstrength);
 	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
@@ -241,7 +263,7 @@ public class CSII extends AdvancedRobot
 	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
 	    xforce += Math.sin(ang) * force;
 	    yforce += Math.cos(ang) * force;
-	    
+	    */
 	    /**The following four lines add wall avoidance.  They will only affect us if the bot is close 
 	    to the walls due to the force from the walls decreasing at a power 3.**/
 	    xforce += 5000/Math.pow(getRange(getX(), getY(), getBattleFieldWidth(), getY()), 3);
@@ -253,6 +275,56 @@ public class CSII extends AdvancedRobot
 	    goTo(getX()-xforce,getY()-yforce);
 	}
 	
+	
+	public void predict(double firePower, double deltaAng) //in degrees
+	{
+		long time;
+		long nextTime;
+		double tarx = (enemyList.get(0)).getX();
+		double tary = (enemyList.get(0)).getY();
+		GravPoint p =  new GravPoint(tarx, tary, 1);
+		
+		deltaAng = Math.toRadians(deltaAng);
+		
+		for(int i = 0; i < 10; i++)
+		{
+			nextTime = (int)Math.round((getRange(getX(), getY(), p.x, p.y)/(20 - (3*firePower))));
+			time = getTime() + nextTime;
+			p = guessPosition(time, deltaAng);
+		}
+		
+		/**Turn the gun to the correct angle**/
+		double gunOffset = getGunHeadingRadians() - (Math.PI/2 - Math.atan2(p.y - getY(), p.x - getX()));
+		setTurnGunLeftRadians(Utils.normalRelativeAngle(gunOffset));
+	}
+	
+	private GravPoint guessPosition(long when, double changeHead)
+	{
+		double time = (enemyList.get(0)).lastAct();
+		double tarx = (enemyList.get(0)).getX();
+		double tary = (enemyList.get(0)).getY();
+		double heading = Math.toRadians((enemyList.get(0)).getHeading()); //radians
+		double speed = (enemyList.get(0)).getVelocity(); 
+		double diff = when - time;
+		double newX,newY;
+		
+		if(Math.abs(changeHead) > 0.0001)
+		{
+			double radius = speed/changeHead;
+			double tothead = diff*changeHead; //----------------------------------------------------------
+			
+			newY = tary + (Math.sin(heading + tothead) * radius) - (Math.sin(heading) * radius);
+			newX = tarx + (Math.cos(heading + tothead) * radius) - (Math.cos(heading) * radius);
+		}
+		else
+		{
+			newY = tary + Math.cos(heading) * speed * diff;
+			newX = tarx + Math.cos(heading) * speed * diff;
+		}
+		
+		GravPoint result = new GravPoint(newX, newY,1);
+		return result;
+	}
 	/**Move towards an x and y coordinate**/
 	void goTo(double x, double y)
 	{
@@ -261,7 +333,12 @@ public class CSII extends AdvancedRobot
 	    double r = turnTo(angle);
 	    setAhead(dist * r);
 	}
-
+	
+	void turnGunTo(GravPoint p)
+	{
+		double angle = Math.toDegrees(absBearing(getX(),getY(),p.x,p.y));
+	    setTurnGunLeft(angle);
+	}
 
 	/**Turns the shortest angle possible to come to a heading, then returns the direction the
 	the bot needs to move in.**/
