@@ -9,7 +9,9 @@ import java.util.*;
 public class CSII extends AdvancedRobot 
 {
 	private Vector<EnemyBot> enemyList = new Vector<EnemyBot>(0);
+	private Manager manager = new Manager();
 	private int radarDirection = 1;
+	
 	//
 	
 	public void run()
@@ -18,7 +20,7 @@ public class CSII extends AdvancedRobot
 		setEventPriority("ScannedRobotEvent", 70); // done to make it uniterruptible from death events
 		//To prevent accesing the vector at the same time;
 		
-		setColors(Color.white,Color.white,Color.pink); // body,gun,radar
+		setColors(Color.pink,Color.green,Color.white); // body,gun,radar
 		
 		/*final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();*/
@@ -35,6 +37,12 @@ public class CSII extends AdvancedRobot
 		while(true)
 		{
 			// Replace the next 4 lines with any behavior you would like
+			/*if(!enemyList.isEmpty())
+			{
+				manager.searchTarget(getX(), getY());
+				manager.perform(getX(), getY());
+			}*/
+			setFire(Math.min(getEnergy(), 3.0));
 			antiGravMove();
 			execute();
 		}
@@ -56,6 +64,11 @@ public class CSII extends AdvancedRobot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e)
 	{
+		double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
+		setTurnGunRightRadians(
+		    robocode.util.Utils.normalRelativeAngle(absoluteBearing - 
+		        getGunHeadingRadians()));
+		
 		EnemyBot enemy =  new EnemyBot(e, getX(), getY(), getHeading());
 		if(!enemyList.contains(enemy))
 		{
@@ -83,8 +96,17 @@ public class CSII extends AdvancedRobot
 	/**
 	 * onHitByBullet: What to do when you're hit by a bullet
 	 */
-	public void onHitByBullet(HitByBulletEvent e) {
+	public void onHitByBullet(HitByBulletEvent e)
+	{
 		// Replace the next line with any behavior you would like
+		
+	}
+	public void onHitRobot(HitRobotEvent e)
+	{
+		// Replace the next line with any behavior you would like
+		setFire(3);
+		setBack(20);
+		setTurnLeft(20);
 		
 	}
 	
@@ -125,8 +147,10 @@ public class CSII extends AdvancedRobot
 		}
 		
 		double radarTurn = 180*radarDirection;
+		
 		if(scanned == getOthers())
 			radarTurn = maxBearing + Math.signum(maxBearing)*16; //22.5 Correction factor
+
 		setTurnRadarRight(radarTurn);
 		radarDirection =(int) Math.signum(radarTurn);
 	}
@@ -278,21 +302,44 @@ public class CSII extends AdvancedRobot
 		return h;	
 	}
 	
-	public class Manager implements ManagerConstants
+	public class Manager 
 	{
 		private int target;
+		private boolean countCirc;
+		public double prevHeading;
 		
 		
 		public Manager()
 		{
 			target = -1;
+			countCirc = false;
+			prevHeading = 0;
 
 		}
 		
-		public void searchTarget()
+		public void searchTarget(double x, double y)
 		{
-			enemyList.clear();
-		}
+	
+		   Iterator<EnemyBot> it = enemyList.iterator();
+		   double curMin = 9999.0;
+		   int enemyindx = 0;
+		   
+		   while (it.hasNext()) 
+		   {
+		     EnemyBot tempBot = (EnemyBot) it.next();
+		     double tpDist = getRange(x,y, tempBot.getX(), tempBot.getY());
+		     // check for dead 
+		     if ((  tempBot.getEnergy() >= 0 && (tpDist < curMin))) {
+		        curMin   = tpDist;
+		        enemyindx = enemyList.indexOf(tempBot);
+		     } // of if
+		   } // of while
+		   
+		   	target = enemyindx;
+		     System.out.println("next target is " + (enemyList.get(target)).getName());
+		   
+		   }
+		
 		
 		public void perform(double myx, double myy)
 		{
@@ -308,8 +355,10 @@ public class CSII extends AdvancedRobot
 				{
 					this.paintingStrategy(myx, myy);
 				}
-				else if((enemyList.get(target)).getName() == "sample.SpinBot")
+				else if((enemyList.get(target)).getName() == "sample.SpinBot" || 
+						(enemyList.get(target)).getName() == "SpinBot")
 				{
+					System.out.println("go for spinbot");
 					this.spinStrategy(myx,myy);
 				}
 				else
@@ -355,15 +404,65 @@ public class CSII extends AdvancedRobot
 		
 		private void spinStrategy(double currX, double currY)
 		{
-			double firepow = 1;
-			double gravstrenght = 500;
-			double tarx, tary,tarhead_deg, tarvel;
+			if(countCirc == false)
+			{
+				prevHeading = (enemyList.get(target)).getHeading();
+				countCirc = true; // We never clear the flag since we will have values later on
+			}
 			
-			(enemyList.get(target)).setPower(gravstrenght);
-			tarx = (enemyList.get(target)).getX();
-			tary = (enemyList.get(target)).getY();
-			tarhead_deg = (enemyList.get(target)).getHeading();
-			tarvel = (enemyList.get(target)).getVelocity();
+			else if(countCirc == true)
+			{
+				System.out.println("LETS predict");
+				double firepow = 2;
+				double gravstrenght = 500;
+				double tarx, tary,tarhead_deg, tarvel;
+				double absoluteBearing = getHeading() + (enemyList.get(target)).getBearing();
+				
+				(enemyList.get(target)).setPower(gravstrenght);
+				tarx = (enemyList.get(target)).getX();
+				tary = (enemyList.get(target)).getY();
+				tarhead_deg = (enemyList.get(target)).getHeading();
+				tarvel = (enemyList.get(target)).getVelocity();
+				
+				double enemyHeadingChange = tarhead_deg - prevHeading;
+				prevHeading = tarhead_deg;
+				double deltaTime = 0;
+				double battleFieldHeight = getBattleFieldHeight(), 
+				       battleFieldWidth = getBattleFieldWidth();
+				double predictedX = tarx, predictedY = tary;
+				//
+				//
+				while((++deltaTime) * (20.0 - 3.0 * firepow) < getRange(currX, currY, predictedX, predictedY))
+				{
+					predictedX += Math.sin(tarhead_deg) * tarvel;
+					predictedY += Math.cos(tarhead_deg) * tarvel;
+					tarhead_deg += enemyHeadingChange;
+					if(	predictedX < 18.0 
+							|| predictedY < 18.0
+							|| predictedX > battleFieldWidth - 18.0
+							|| predictedY > battleFieldHeight - 18.0)
+					{
+					 
+							predictedX = Math.min(Math.max(18.0, predictedX), 
+							    battleFieldWidth - 18.0);	
+							predictedY = Math.min(Math.max(18.0, predictedY), 
+							    battleFieldHeight - 18.0);
+							break;
+					}
+				}
+					
+					double theta = Utils.normalAbsoluteAngleDegrees(Math.atan2
+							(predictedX - getX(), predictedY - getY()));
+						 
+						setTurnRadarRight(Utils.normalRelativeAngleDegrees(
+						    absoluteBearing - getRadarHeading()));
+						setTurnGunRight(Utils.normalRelativeAngleDegrees(
+						    theta - getGunHeading()));
+						
+						setFire(3);
+				
+			}
+			
 			
 		//	CircularIntercept intercept = new CircularIntercept();
 		//	intercept.calculate(currX, currY, tarx, tary, tarhead, tarvel, firepow, /*Angvel*/ 0);
