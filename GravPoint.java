@@ -15,12 +15,12 @@ public class GravPoint
     {
         x = pX;
         y = pY;
-        power = -500; // Default value
+        power = 1000; // Default value
     }
     public GravPoint()
     {
         x = 0;
         y = 0;
-        power = -500; // Default value
+        power = 1000; // Default value
     }
 }
