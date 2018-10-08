@@ -9,9 +9,11 @@ import java.util.*;
 public class CSII extends AdvancedRobot 
 {
 	private Vector<EnemyBot> enemyList = new Vector<EnemyBot>(0);
-	private Manager manager = new Manager();
+	private EnemyBot target = null;
 	private int radarDirection = 1;
 	private double firePow;
+	private double changeHeading;
+	private double prevHeading;
 	
 	//
 	
@@ -22,7 +24,7 @@ public class CSII extends AdvancedRobot
 		//To prevent accesing the vector at the same time;
 		
 		Color spec = new Color(220, 27, 124);
-		setColors(Color.black,spec,Color.black); // body,gun,radar
+		setColors(Color.black, spec, Color.white); // body,gun,radar
 		
 		/*final double battleWidth = getBattleFieldWidth();
 		final double battleHeight = getBattleFieldHeight();*/
@@ -47,13 +49,9 @@ public class CSII extends AdvancedRobot
 			
 			if(!enemyList.isEmpty())
 			{
-				firePow = 400/enemyList.get(0).getDistance();
-				/*point = guessPosition( 4 , 6.253); 
-			    gunOffset = getGunHeadingRadians() - (Math.PI/2 - Math.atan2(point.y - getY(), point.x - getX()));
-			    
-				setTurnGunLeftRadians(Utils.normalRelativeAngle(gunOffset));
-				*/
-				predict(firePow , 6.253);
+				searchAndSetTarget();
+				firePow = Math.min(400/target.getDistance(), 2);
+				brutAttack();
 				setFire(firePow);
 			}
 			antiGravMove();
@@ -77,10 +75,6 @@ public class CSII extends AdvancedRobot
 	 */
 	public void onScannedRobot(ScannedRobotEvent e)
 	{
-		double absoluteBearing = getHeadingRadians() + e.getBearingRadians();
-		setTurnGunRightRadians(
-		    robocode.util.Utils.normalRelativeAngle(absoluteBearing - 
-		        getGunHeadingRadians()));
 		
 		EnemyBot enemy =  new EnemyBot(e, getX(), getY(), getHeading());
 		if(!enemyList.contains(enemy))
@@ -274,22 +268,52 @@ public class CSII extends AdvancedRobot
 	    goTo(getX()-xforce,getY()-yforce);
 	}
 	
-	
-	public void predict(double firePower, double deltaAng) //in degrees
+	public void searchAndSetTarget()
 	{
-		long time;
+
+	   Iterator<EnemyBot> it = enemyList.iterator();
+	   double curMin = 9999.0;
+	   
+	   while (it.hasNext()) 
+	   {
+	     EnemyBot tempBot = (EnemyBot) it.next();
+	     double tpDist = getRange(getX(),getY(), tempBot.getX(), tempBot.getY());
+	     // check for dead 
+	     if ((  tempBot.getEnergy() >= 0 && (tpDist < curMin))) {
+	        curMin   = tpDist;
+	        target = tempBot;
+	     } // of if
+	   } // of while
+	   	
+	   	 
+	     System.out.println("next target is " + target.getName());
+	     changeHeading = changeHeading - target.getHeading(); 
+	   
+	   }
+	
+	public void brutAttack()
+	{
+		System.out.println("-------Brut attack");
+		double absoluteBearing = getHeadingRadians() + Math.toRadians(target.getBearing());
+		setTurnGunRightRadians(
+			    robocode.util.Utils.normalRelativeAngle(absoluteBearing - 
+			        getGunHeadingRadians()));
+	}
+	
+	public void circPredict() //in degrees
+	{
+		System.out.println("-------Circular attack");
+		long time = 0;
 		long nextTime;
-		double tarx = (enemyList.get(0)).getX();
-		double tary = (enemyList.get(0)).getY();
-		GravPoint p =  new GravPoint(tarx, tary, 1);
+		GravPoint p = new GravPoint(0,0); 
 		
-		deltaAng = Math.toRadians(deltaAng);
+		double changeHeadRad = Math.toRadians(changeHeading);
 		
 		for(int i = 0; i < 10; i++)
 		{
-			nextTime = (int)Math.round((getRange(getX(), getY(), p.x, p.y)/(20 - (3*firePower))));
+			nextTime = (int)Math.round((getRange(getX(), getY(), target.getX(), target.getY())/(20 - (3*firePow))));
 			time = getTime() + nextTime;
-			p = guessPosition(time, deltaAng);
+			p = guessPosition(time, changeHeadRad);
 		}
 		
 		/**Turn the gun to the correct angle**/
@@ -299,12 +323,10 @@ public class CSII extends AdvancedRobot
 	
 	private GravPoint guessPosition(long when, double changeHead)
 	{
-		double time = (enemyList.get(0)).lastAct();
-		double tarx = (enemyList.get(0)).getX();
-		double tary = (enemyList.get(0)).getY();
-		double heading = Math.toRadians((enemyList.get(0)).getHeading()); //radians
-		double speed = (enemyList.get(0)).getVelocity(); 
-		double diff = when - time;
+		
+		double heading = Math.toRadians(target.getHeading()); //radians
+		double speed = target.getVelocity();
+		double diff = when - target.lastAct();
 		double newX,newY;
 		
 		if(Math.abs(changeHead) > 0.0001)
@@ -312,18 +334,20 @@ public class CSII extends AdvancedRobot
 			double radius = speed/changeHead;
 			double tothead = diff*changeHead; //----------------------------------------------------------
 			
-			newY = tary + (Math.sin(heading + tothead) * radius) - (Math.sin(heading) * radius);
-			newX = tarx + (Math.cos(heading + tothead) * radius) - (Math.cos(heading) * radius);
+			newY = target.getY() + (Math.sin(heading + tothead) * radius) - (Math.sin(heading) * radius);
+			newX = target.getX() + (Math.cos(heading + tothead) * radius) - (Math.cos(heading) * radius);
 		}
 		else
 		{
-			newY = tary + Math.cos(heading) * speed * diff;
-			newX = tarx + Math.cos(heading) * speed * diff;
+			newY = target.getY() + Math.cos(heading) * speed * diff;
+			newX = target.getX() + Math.cos(heading) * speed * diff;
 		}
 		
 		GravPoint result = new GravPoint(newX, newY,1);
 		return result;
 	}
+	
+	
 	/**Move towards an x and y coordinate**/
 	void goTo(double x, double y)
 	{
@@ -333,12 +357,14 @@ public class CSII extends AdvancedRobot
 	    setAhead(dist * r);
 	}
 	
+	
+	
 	void turnGunTo(GravPoint p)
 	{
 		double angle = Math.toDegrees(absBearing(getX(),getY(),p.x,p.y));
 	    setTurnGunLeft(angle);
 	}
-
+	
 	/**Turns the shortest angle possible to come to a heading, then returns the direction the
 	the bot needs to move in.**/
 	
