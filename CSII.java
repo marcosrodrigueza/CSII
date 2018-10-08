@@ -49,6 +49,7 @@ public class CSII extends AdvancedRobot
 			
 			if(!enemyList.isEmpty())
 			{
+				
 				searchAndSetTarget();
 				firePow = Math.min(400/target.getDistance(), 2);
 				brutAttack();
@@ -98,6 +99,24 @@ public class CSII extends AdvancedRobot
 			}//end for
 			
 		} //end else
+	}
+	
+	public void onRobotDeath(RobotDeathEvent e)
+	{
+		EnemyBot enemyDead =  new EnemyBot();
+		enemyDead.setName(e.getName());
+	
+		
+		for(int i = 0; i < enemyList.size(); i++)
+		{
+			if((enemyList.elementAt(i)).equals(enemyDead))
+			{
+				enemyList.remove(i); 
+				break;
+			}
+		}//end for
+		
+		
 	}
 
 	/**
@@ -274,6 +293,7 @@ public class CSII extends AdvancedRobot
 	   Iterator<EnemyBot> it = enemyList.iterator();
 	   double curMin = 9999.0;
 	   
+	   
 	   while (it.hasNext()) 
 	   {
 	     EnemyBot tempBot = (EnemyBot) it.next();
@@ -285,11 +305,11 @@ public class CSII extends AdvancedRobot
 	     } // of if
 	   } // of while
 	   	
-	   	 
 	     System.out.println("next target is " + target.getName());
 	     changeHeading = changeHeading - target.getHeading(); 
 	   
-	   }
+	  }
+	
 	
 	public void brutAttack()
 	{

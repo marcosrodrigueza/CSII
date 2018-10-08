@@ -29,6 +29,20 @@ public class EnemyBot
 		  calcEnemyCordsXY(myx, myy, myheading);
 	  }
 	  
+	  public EnemyBot()
+	  {
+		  this.name = "n";
+		  this.energy = 0;
+		  this.bearing = 0;
+		  this.distance = 0;
+		  this.heading = 0;
+		  this.velocity = 0;
+		  this.timeac = 0;
+		  pos.x = 0;
+		  pos.y = 0;
+		  pos.power = 1;
+	  }
+	  
 	  //Set and get methods
 	  public String getName() 
 	  {
