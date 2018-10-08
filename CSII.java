@@ -13,7 +13,7 @@ public class CSII extends AdvancedRobot
 	private int radarDirection = 1;
 	private double firePow;
 	private double changeHeading;
-	private double prevHeading;
+	
 	
 	//
 	
@@ -26,10 +26,10 @@ public class CSII extends AdvancedRobot
 		Color spec = new Color(220, 27, 124);
 		setColors(Color.black, spec, Color.white); // body,gun,radar
 		
-		/*final double battleWidth = getBattleFieldWidth();
-		final double battleHeight = getBattleFieldHeight();*/
+
 		
 		addCustomEvent( new RadarTurnCompleteCondition(this)); //Custom event
+		
 		setAdjustGunForRobotTurn(true); //gun  independent from robot
 		setAdjustRadarForGunTurn(true); // radar independent from gun
 		setAdjustRadarForRobotTurn(true);
@@ -40,12 +40,6 @@ public class CSII extends AdvancedRobot
 		// Robot main loop
 		while(true)
 		{
-			// Replace the next 4 lines with any behavior you would like
-			/*if(!enemyList.isEmpty())
-			{
-				manager.searchTarget(getX(), getY());
-				manager.perform(getX(), getY());
-			}*/
 			
 			if(!enemyList.isEmpty())
 			{
@@ -101,6 +95,9 @@ public class CSII extends AdvancedRobot
 		} //end else
 	}
 	
+	/**
+	 * onRobotDeath: What to do when a robot dies
+	 */
 	public void onRobotDeath(RobotDeathEvent e)
 	{
 		EnemyBot enemyDead =  new EnemyBot();
@@ -142,9 +139,6 @@ public class CSII extends AdvancedRobot
 	public void onHitWall(HitWallEvent e) 
 	{
 		// Replace the next line with any behavior you would like
-		//setTurnRight(180);
-		//ahead(150);
-		
 		
 	}
 	
@@ -195,7 +189,7 @@ public class CSII extends AdvancedRobot
 	    double repPow;
 	    double dist;
 	    
-	    //cycle through all the enemies.  If they are alive, they are repulsive.  Calculate the force on us
+	    //cycle through all the enemies.  If they are alive, they are attractive.  Calculate the force on us
 		for(int i = 0; i < enemyList.size(); i++)
 		{
 				p = enemyList.get(i).getGravPoint();
@@ -203,7 +197,7 @@ public class CSII extends AdvancedRobot
 				
 		        forceAtrac = p.power/Math.pow(dist,2);
 		        repPow = 0 - (p.power/2);
-		        forceRep = repPow/Math.pow(getRange(getX(),getY(),p.x,p.y),1.5); //DEcreases to the 4th
+		        forceRep = repPow/Math.pow(getRange(getX(),getY(),p.x,p.y),1.5); //DEcreases to the 1.5
 		        force = forceAtrac - forceRep;
 		        if(dist < 100)
 		        {
@@ -225,57 +219,8 @@ public class CSII extends AdvancedRobot
 	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
 	    xforce += Math.sin(ang) * force;
 	    yforce += Math.cos(ang) * force;
-	    
-	    midpointstrength = -1000;
-	    
-	    p = new GravPoint(0,0, midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    
-	    p = new GravPoint(0, getBattleFieldHeight(), midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    
-	    p = new GravPoint(getBattleFieldWidth(), 0, midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),4);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    
-	    p = new GravPoint(getBattleFieldWidth(), getBattleFieldHeight(), midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),2);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    //---------------------------------------------------------------------------------------------
-	    p = new GravPoint(getBattleFieldWidth()/2, 0, midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),2);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    
-	    p = new GravPoint(getBattleFieldWidth(), getBattleFieldHeight()/2, midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),2);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    
-	    p = new GravPoint(0, getBattleFieldHeight()/2, midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),2);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
-	    
-	    p = new GravPoint(getBattleFieldWidth()/2, getBattleFieldHeight(), midpointstrength);
-	    force = p.power/Math.pow(getRange(getX(),getY(),p.x,p.y),2);
-	    ang = Utils.normalRelativeAngle(Math.PI/2 - Math.atan2(getY() - p.y, getX() - p.x)); 
-	    xforce += Math.sin(ang) * force;
-	    yforce += Math.cos(ang) * force;
 	    */
+		
 	    /**The following four lines add wall avoidance.  They will only affect us if the bot is close 
 	    to the walls due to the force from the walls decreasing at a power 3.**/
 	    xforce += 5000/Math.pow(getRange(getX(), getY(), getBattleFieldWidth(), getY()), 3);
@@ -298,6 +243,7 @@ public class CSII extends AdvancedRobot
 	   {
 	     EnemyBot tempBot = (EnemyBot) it.next();
 	     double tpDist = getRange(getX(),getY(), tempBot.getX(), tempBot.getY());
+	     
 	     // check for dead 
 	     if ((  tempBot.getEnergy() >= 0 && (tpDist < curMin))) {
 	        curMin   = tpDist;
@@ -320,7 +266,8 @@ public class CSII extends AdvancedRobot
 			        getGunHeadingRadians()));
 	}
 	
-	public void circPredict() //in degrees
+	/**Circular target prediction, still not good results**/
+	public void circPredict() //in rads
 	{
 		System.out.println("-------Circular attack");
 		long time = 0;
@@ -340,7 +287,7 @@ public class CSII extends AdvancedRobot
 		double gunOffset = getGunHeadingRadians() - (Math.PI/2 - Math.atan2(p.y - getY(), p.x - getX()));
 		setTurnGunLeftRadians(Utils.normalRelativeAngle(gunOffset));
 	}
-	
+	/**Helper function to predict CIrcular, not good results**/
 	private GravPoint guessPosition(long when, double changeHead)
 	{
 		
@@ -378,7 +325,7 @@ public class CSII extends AdvancedRobot
 	}
 	
 	
-	
+	/**Not in use**/
 	void turnGunTo(GravPoint p)
 	{
 		double angle = Math.toDegrees(absBearing(getX(),getY(),p.x,p.y));

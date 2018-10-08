@@ -29,6 +29,8 @@ public class EnemyBot
 		  calcEnemyCordsXY(myx, myy, myheading);
 	  }
 	  
+	  
+	  
 	  public EnemyBot()
 	  {
 		  this.name = "n";
@@ -179,11 +181,11 @@ public class EnemyBot
 	  {
 		   if (obj instanceof EnemyBot)
 		   {
-		 //    System.out.println("in obj is " + ((Duck) obj).getName() + " me is " + duckInfo.getName());
+
 		      if (((EnemyBot) obj).getName().equals(this.getName()) )
 		        return true;
 		   }
-		//   System.out.println("equals called");
+
 		   return false;
 	 }
 
